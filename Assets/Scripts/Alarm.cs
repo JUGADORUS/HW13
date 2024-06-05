@@ -5,32 +5,68 @@ using UnityEngine;
 public class Alarm : MonoBehaviour
 {
     [SerializeField] private AudioSource _audioSource;
+    [SerializeField] private Trigger _trigger;
     [SerializeField] private float _speed;
 
+    private Coroutine _increaseVolume;
+    private Coroutine _decreaseVolume;
     private float _maxVolume = 1f;
-    private float _minVolume = 0;
-    private bool _isInHouse = false;
+    private float _minVolume = 0f;
 
-    private void Update()
+    private void OnEnable()
     {
-        if(_isInHouse == true)
+        _trigger.GotInHouse += TurnOnAlarm;
+        _trigger.GotOutHouse += TurnOffAlarm;
+    }
+
+    private void OnDisable()
+    {
+        _trigger.GotInHouse -= TurnOnAlarm;
+        _trigger.GotOutHouse -= TurnOffAlarm;
+    }
+
+    private void TurnOnAlarm()
+    {
+        Stop(_decreaseVolume);
+        _increaseVolume = StartCoroutine(IncreaseVolume());
+    }
+
+    private void TurnOffAlarm()
+    {
+        Stop(_increaseVolume);
+        _decreaseVolume = StartCoroutine(DecreaseVolume());
+    }
+
+    private IEnumerator DecreaseVolume()
+    {
+        while(_audioSource.volume > _minVolume)
         {
-            _audioSource.volume = Mathf.MoveTowards(_audioSource.volume, _maxVolume, _speed * Time.deltaTime);
+            ChangeVolume(_minVolume);
+            yield return null;
         }
-        else
+
+        _audioSource.Stop();
+    }
+
+    private IEnumerator IncreaseVolume()
+    {
+        _audioSource.Play();
+
+        while (_audioSource.volume < _maxVolume)
         {
-            _audioSource.volume = Mathf.MoveTowards(_audioSource.volume, _minVolume, _speed * Time.deltaTime);
+            ChangeVolume(_maxVolume);
+            yield return null;
         }
     }
 
-    private void OnTriggerEnter(Collider other)
+    private void Stop(Coroutine coroutine)
     {
-        _isInHouse = true;
+        if (coroutine != null)
+            StopCoroutine(coroutine);
     }
 
-    private void OnTriggerExit(Collider other)
+    private void ChangeVolume(float to)
     {
-        _isInHouse = false;
+        _audioSource.volume = Mathf.MoveTowards(_audioSource.volume, to, _speed * Time.deltaTime);
     }
-
 }
