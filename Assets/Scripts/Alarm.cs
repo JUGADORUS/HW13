@@ -1,5 +1,4 @@
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class Alarm : MonoBehaviour
@@ -28,34 +27,27 @@ public class Alarm : MonoBehaviour
     private void TurnOnAlarm()
     {
         Stop(_decreaseVolume);
-        _increaseVolume = StartCoroutine(IncreaseVolume());
+        _audioSource.Play();
+        _increaseVolume = StartCoroutine(ChangeVolume(_maxVolume));
     }
 
     private void TurnOffAlarm()
     {
         Stop(_increaseVolume);
-        _decreaseVolume = StartCoroutine(DecreaseVolume());
+        _decreaseVolume = StartCoroutine(ChangeVolume(_minVolume));
     }
 
-    private IEnumerator DecreaseVolume()
+    private IEnumerator ChangeVolume(float target)
     {
-        while(_audioSource.volume > _minVolume)
+        while (_audioSource.volume != target)
         {
-            ChangeVolume(_minVolume);
+            _audioSource.volume = Mathf.MoveTowards(_audioSource.volume, target, _speed * Time.deltaTime);
             yield return null;
         }
 
-        _audioSource.Stop();
-    }
-
-    private IEnumerator IncreaseVolume()
-    {
-        _audioSource.Play();
-
-        while (_audioSource.volume < _maxVolume)
+        if (_audioSource.volume == _minVolume)
         {
-            ChangeVolume(_maxVolume);
-            yield return null;
+            _audioSource.Stop();
         }
     }
 
@@ -63,10 +55,5 @@ public class Alarm : MonoBehaviour
     {
         if (coroutine != null)
             StopCoroutine(coroutine);
-    }
-
-    private void ChangeVolume(float to)
-    {
-        _audioSource.volume = Mathf.MoveTowards(_audioSource.volume, to, _speed * Time.deltaTime);
     }
 }

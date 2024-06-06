@@ -8,11 +8,17 @@ public class Trigger : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        GotInHouse?.Invoke();
+        if (other.TryGetComponent<Robber>(out Robber robber))
+        {
+            GotInHouse?.Invoke();
+        }
     }
 
     private void OnTriggerExit(Collider other)
     {
-        GotOutHouse?.Invoke();
+        if (other.TryGetComponent<Robber>(out Robber robber))
+        {
+            GotOutHouse?.Invoke();
+        }
     }
 }
